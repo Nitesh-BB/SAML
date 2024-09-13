@@ -1,0 +1,88 @@
+body {
+  width: 100vw;
+  height: 100vh;
+  font-family: 'Roboto', sans-serif;
+}
+
+.form-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 30px;
+  width: 450px;
+  height: 100vh;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.form-control {
+  width: 100%;
+  height: 60px;
+  padding: 16.5px 14px;
+  color: rgba(0, 0, 0, 0.87);
+  border-radius: 4px;
+  font-size: 1rem;
+  line-height: 1.75;
+  letter-spacing: 0.02857em;
+  cursor: text;
+  border: 0.5px solid rgba(0, 0, 0, 0.5);
+}
+
+.form-control:focus {
+  outline: none;
+  border: 2px solid rgb(0, 119, 182);
+}
+
+.form-control:focus + label {
+  color: rgb(0, 119, 182);
+}
+
+label {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 5px;
+}
+.btn {
+  font-size: 1rem;
+  text-transform: capitalize;
+  transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,
+    box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,
+    border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0.02857em;
+  min-width: 64px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  color: rgb(255, 255, 255);
+  background-color: rgb(0, 119, 182);
+  box-shadow: rgb(0 0 0 / 20%) 0px 3px 1px -2px,
+    rgb(0 0 0 / 14%) 0px 2px 2px 0px, rgb(0 0 0 / 12%) 0px 1px 5px 0px;
+  outline: 0px;
+  border: 0px;
+  margin: 16px 0px 16px;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+  display: inline-flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+}
+
+#error {
+  color: red;
+  background-color: #d3d3d3;
+  min-height: 30px;
+  padding: 10px;
+}

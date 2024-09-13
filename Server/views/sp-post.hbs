@@ -1,0 +1,13 @@
+<form id="saml-form" method="post" action="{{entityEndpoint}}" autocomplete="off">
+    <input name="{{type}}" hidden value="{{context}}" />
+    {{#if relayState}}
+    <input name="RelayState" hidden value="{{relayState}}" />
+    {{/if}}
+</form>
+<script type="text/javascript">
+    //console.log('{{context}}');
+    // Automatic form submission
+    (function () {
+        document.forms[0].submit();
+    })();
+</script>
