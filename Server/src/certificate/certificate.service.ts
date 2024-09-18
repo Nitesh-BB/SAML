@@ -3,6 +3,7 @@ import * as rs from 'jsrsasign';
 import { GenerateCertficateDto } from './dto/generate-certficate.dto';
 import * as selfsigned from 'selfsigned';
 import { v4 as uuid } from 'uuid';
+import { extname } from 'path';
 @Injectable()
 export class CertificateService {
   private readonly logger = new Logger('CertificateService');
@@ -70,10 +71,19 @@ export class CertificateService {
       cakey: prv, // can specify private key object or PEM string
 
       ext: [
+        // add subjectKeyIdentifier and authorityKeyIdentifier extension
         {
           extname: 'basicConstraints',
           critical: true, // This field is optional; set as needed
           cA: true,
+        },
+        {
+          extname: 'subjectKeyIdentifier', // Subject Key Identifier
+          kid: { hex: rs.KJUR.crypto.Util.hashHex(pubpem, 'sha1') }, // Generate SKI using SHA-1 hash of the public key PEM
+        },
+        {
+          extname: 'authorityKeyIdentifier', // Authority Key Identifier
+          kid: { hex: rs.KJUR.crypto.Util.hashHex(pubpem, 'sha1') }, // Can be the same as SKI or different if using a different CA
         },
       ],
     });
