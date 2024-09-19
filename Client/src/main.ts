@@ -11,6 +11,9 @@ async function bootstrap() {
   app.use(express.urlencoded({ extended: true }));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
-  await app.listen(port);
+
+  await app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
 }
 bootstrap();

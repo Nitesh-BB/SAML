@@ -43,7 +43,7 @@ export class ServiceProviderService {
         // ),
 
         privateKey: fs.readFileSync('./encryptKey.pem'),
-        entityID: `http://localhost:8080/sp/metadata`,
+        entityID: `http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5`,
         assertionConsumerService: [
           {
             Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
@@ -125,9 +125,11 @@ export class ServiceProviderService {
 
       const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
 
+      console.log(result);
+
       const { extract } = result;
-      this.logger.log(`ACS recieved data parsed: ${JSON.stringify(extract)}`);
-      return res.send(JSON.stringify(extract, null, 4));
+      this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
+      return res.json(result);
     } catch (err) {
       this.logger.error('Error in acs: ', err);
       throw new HttpException(err.message, err.status || 500);
