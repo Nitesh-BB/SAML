@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Req,
@@ -77,7 +78,7 @@ export class IdpController {
     return this.idpService.logoutRedirect(req, res, idpId);
   }
 
-  @Put('/update/:idpId')
+  @Patch('/update/:idpId')
   async updateIdp(@Body() body: UpdateIdpDto, @Param('idpId') idpId: string) {
     return this.idpService.updateIdp(idpId, body);
   }

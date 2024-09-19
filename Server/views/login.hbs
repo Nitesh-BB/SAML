@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 0;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        button {
+            padding: 12px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 20px;
+                margin: 20px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required />
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required />
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+
+<script>
+    const form = document.getElementById("loginForm");
+
+    const randomId = (length = 20) => {
+        return Math.random().toString(36).substr(2, length);
+    };
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const requestId = new URLSearchParams(window.location.search).get("requestId");
+        const idpId = new URLSearchParams(window.location.search).get("idpId");
+
+
+        const email = form.email.value;
+        const dataToPost = {
+            email,
+            id: "1234r34",
+            name: "Nitesh Singh",
+            role: "admin",
+            phone: "1234567890",
+            orgId: "123",   
+            
+        };
+
+        const newForm = document.createElement("form");
+        newForm.method = "POST";
+        newForm.action = `http://localhost:4000/idp/login/post?requestId=${requestId}&idpId=${idpId}`;
+        newForm.style.display = "none";
+
+        Object.keys(dataToPost).forEach((key) => {
+            const input = document.createElement("input");
+            input.name = key;
+            input.value = dataToPost[key];
+            newForm.appendChild(input);
+        });
+
+        document.body.appendChild(newForm);
+
+        newForm.submit();
+
+        document.body.removeChild(newForm);
+    });
+</script>
+
+</html>

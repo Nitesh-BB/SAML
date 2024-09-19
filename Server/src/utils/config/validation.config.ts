@@ -10,13 +10,11 @@ export const configValidationSchema = joi.object({
   PORT: joi.number().default(4000),
   MONGO_URI: joi.string().required(),
   SESSION_SECRET: joi.string().required(),
-  SERVER_URL: joi
-    .string()
-    .when('NODE_ENV', {
-      is: 'production',
-      then: joi.required(),
-    })
-    .default('http://localhost:4000'),
+  SERVER_URL: joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: joi.required(),
+    otherwise: joi.string().default('http://localhost:4000'),
+  }),
 });
 
 export const configValidationOptions = {

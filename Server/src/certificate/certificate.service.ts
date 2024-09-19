@@ -1,9 +1,9 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common';
 import * as rs from 'jsrsasign';
-import { GenerateCertficateDto } from './dto/generate-certficate.dto';
+import { GenerateCertificateDto } from './dto/generate-certificate.dto';
 import * as selfsigned from 'selfsigned';
 import { v4 as uuid } from 'uuid';
-import { extname } from 'path';
+
 @Injectable()
 export class CertificateService {
   private readonly logger = new Logger('CertificateService');
@@ -24,7 +24,7 @@ export class CertificateService {
   //   console.log(cert.certificate);
   // }
 
-  generateCertificate(generateCertficateDto?: GenerateCertficateDto): {
+  generateCertificate(generateCertificateDto: GenerateCertificateDto): {
     certificate: string;
     privateKey: string;
     publicKey: string;
@@ -36,7 +36,7 @@ export class CertificateService {
     const pubpem = rs.KEYUTIL.getPEM(pub, 'PKCS8PUB');
     const validTillDate = new Date(
       new Date().getTime() +
-        1000 * 60 * 60 * 24 * (generateCertficateDto.validDays || 365),
+        1000 * 60 * 60 * 24 * (generateCertificateDto.validDays || 365),
     );
     let validTill =
       validTillDate.toISOString().split('T')[0].split('-').join('') +
@@ -57,17 +57,17 @@ export class CertificateService {
       },
 
       subject: {
-        C: generateCertficateDto.countryName,
-        ST: generateCertficateDto.state,
-        L: generateCertficateDto.locality,
-        O: generateCertficateDto.organization,
-        OU: generateCertficateDto.organizationUnit,
-        CN: generateCertficateDto.commonName,
+        C: generateCertificateDto.countryName,
+        ST: generateCertificateDto.state,
+        L: generateCertificateDto.locality,
+        O: generateCertificateDto.organization,
+        OU: generateCertificateDto.organizationUnit,
+        CN: generateCertificateDto.commonName,
       },
       notbefore: Date.now(),
       notafter: validTill,
       sbjpubkey: pub, // can specify public key object or PEM string
-      sigalg: generateCertficateDto.sigalg || 'SHA512withRSA',
+      sigalg: generateCertificateDto.sigalg || 'SHA512withRSA',
       cakey: prv, // can specify private key object or PEM string
 
       ext: [
@@ -95,13 +95,15 @@ export class CertificateService {
     };
   }
 
-  generateSelfSignedCertificate(generateCertficateDto?: GenerateCertficateDto) {
+  generateSelfSignedCertificate(
+    generateCertificateDto?: GenerateCertificateDto,
+  ) {
     try {
       this.logger.log('Generating self signed certificate');
       /// const attrs = [{ name: 'commonName', value: 'contoso.com' }];
       const attrs = [
         {
-          value: generateCertficateDto.commonName,
+          value: generateCertificateDto.commonName,
           type: 'server',
           name: 'blue-bricks',
         },

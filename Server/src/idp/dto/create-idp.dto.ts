@@ -1,27 +1,28 @@
 import {
   IsBoolean,
+  IsDefined,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 import { MessageSigningOrderEnum } from '../enums/message-signing-order.enum';
 
 import { ApiProperty } from '@nestjs/swagger';
-import { GenerateId } from 'src/utils';
+import { v4 as uuid } from 'uuid';
 import { NameIDFormatEnum } from '../enums/name-id.enum';
+import { Type } from 'class-transformer';
+import { AttributeNameFormat } from '../enums/attributes-nameformat.enum';
+import { AttributesValueType } from '../enums/attributes-value-type.enum';
 
 export class CreateIdpDto {
   @IsString()
   @IsOptional()
   @ApiProperty({
-    default: GenerateId('idp', 17),
+    default: uuid(),
   })
   idpId: string;
-
-  //  @IsUrl()
-  @IsNotEmpty()
-  entityID: string;
 
   @IsString()
   @IsOptional()
@@ -31,13 +32,17 @@ export class CreateIdpDto {
   })
   nameIdFormat: NameIDFormatEnum;
 
-  //  @IsUrl()
+  @ApiProperty({
+    example: 'https://sp.com/acs',
+  })
   @IsNotEmpty()
   ssoUrl: string;
 
   @IsString()
-  //  @IsUrl()
   @IsOptional()
+  @ApiProperty({
+    example: 'https://sp.com/slo',
+  })
   sloUrl: string;
 
   @IsBoolean()
@@ -65,4 +70,45 @@ export class CreateIdpDto {
   @IsString()
   @IsOptional()
   defaultRelayState: string;
+
+  @IsDefined()
+  @Type(() => AttributesDto)
+  @ValidateNested({ each: true })
+  attributes: AttributesDto[];
+}
+
+export class AttributesDto {
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    example: 'id',
+  })
+  name: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    example: 'user.id',
+  })
+  valueTag: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(AttributeNameFormat)
+  @ApiProperty({
+    example: AttributeNameFormat.BASIC,
+    enum: AttributeNameFormat,
+    default: AttributeNameFormat.BASIC,
+  })
+  nameFormat: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(AttributesValueType)
+  @ApiProperty({
+    example: AttributesValueType.STRING,
+    enum: AttributesValueType,
+    default: AttributesValueType.STRING,
+  })
+  valueXsiType: string;
 }

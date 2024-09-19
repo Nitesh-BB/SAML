@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Render } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AppService } from './app.service';
 
@@ -11,4 +11,8 @@ export class AppController {
   getHello() {
     return this.appService.getHello();
   }
+
+  @Get('login')
+  @Render('login')
+  login() {}
 }

@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GenerateCertficateDto } from './dto/generate-certficate.dto';
+import { GenerateCertificateDto } from './dto/generate-certificate.dto';
 import { CertificateService } from './certificate.service';
 
 @Controller('certificate')
@@ -8,7 +8,7 @@ import { CertificateService } from './certificate.service';
 export class CertificateController {
   constructor(private readonly certificateService: CertificateService) {}
   @Post('create')
-  async createCertificate(@Body() body: GenerateCertficateDto) {
+  async createCertificate(@Body() body: GenerateCertificateDto) {
     return this.certificateService.generateSelfSignedCertificate(body);
   }
 }

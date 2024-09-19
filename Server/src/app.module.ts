@@ -22,7 +22,6 @@ import {
     MongooseModule.forRoot(process.env.MONGO_URI),
     IdpModule,
     ServiceProviderModule,
-
     CertificateModule,
   ],
   controllers: [AppController],

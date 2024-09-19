@@ -7,7 +7,7 @@ import {
   IsEnum,
 } from 'class-validator';
 
-export class GenerateCertficateDto {
+export class GenerateCertificateDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
@@ -55,7 +55,7 @@ export class GenerateCertficateDto {
   @ApiProperty({
     default: '',
   })
-  emailAddress: string;
+  emailAddress?: string;
 
   @IsNumber()
   @IsOptional()
@@ -71,4 +71,8 @@ export class GenerateCertficateDto {
   })
   @IsOptional()
   sigalg: string;
+
+  constructor(partial: GenerateCertificateDto) {
+    Object.assign(this, partial);
+  }
 }

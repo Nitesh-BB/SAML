@@ -3,6 +3,7 @@ import * as mongoose from 'mongoose';
 import { GenerateId } from 'src/utils';
 import { MessageSigningOrderEnum } from '../enums/message-signing-order.enum';
 import { NameIDFormatEnum } from '../enums/name-id.enum';
+import { AttributesDto } from '../dto/create-idp.dto';
 
 export type IdpDocument = mongoose.Document & Idp;
 @Schema({
@@ -60,6 +61,11 @@ export class Idp {
 
   @Prop()
   defaultRelayState: string;
+
+  @Prop({
+    type: [AttributesDto],
+  })
+  attributes: AttributesDto[];
 }
 
 export const IdpSchema = SchemaFactory.createForClass(Idp);

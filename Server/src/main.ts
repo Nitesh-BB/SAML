@@ -48,11 +48,10 @@ async function bootstrap() {
     .setDescription('SAML2.0 Documentation')
     .setVersion('1.0.0')
     .addBearerAuth()
-    .setContact('Help', '', 'help@saml2.com')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('docs', app, document, {
+  SwaggerModule.setup('/api/docs', app, document, {
     swaggerOptions: {
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
