@@ -66,6 +66,11 @@ export class Idp {
     type: [AttributesDto],
   })
   attributes: AttributesDto[];
+
+  @Prop({
+    default: 7 * 24 * 60 * 60 * 1000,
+  })
+  sessionTTl: number;
 }
 
 export const IdpSchema = SchemaFactory.createForClass(Idp);

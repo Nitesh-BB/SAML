@@ -12,13 +12,18 @@ export class ServiceProviderController {
     await this.serviceProviderService.spInitiatedRedirect(req, res);
   }
 
-  @Get('login-post')
+  @Post('login-post')
   async spInitiatedPost(@Res() res: any, @Req() req: any) {
     await this.serviceProviderService.spInitiatedPost(req, res);
   }
 
   @Get('logout')
   async spInitiatedLogout(@Res() res: any, @Req() req: any) {
+    await this.serviceProviderService.spInitiatedLogout(req, res);
+  }
+
+  @Post('logout')
+  async spInitiatedLogoutPost(@Res() res: any, @Req() req: any) {
     await this.serviceProviderService.spInitiatedLogout(req, res);
   }
 

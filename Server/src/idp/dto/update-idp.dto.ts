@@ -2,10 +2,15 @@ import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { MessageSigningOrderEnum } from '../enums/message-signing-order.enum';
 
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { NameIDFormatEnum } from '../enums/name-id.enum';
+import { CreateIdpDto } from './create-idp.dto';
+import { Exclude } from 'class-transformer';
 
-export class UpdateIdpDto {
+export class UpdateIdpDto extends PartialType(CreateIdpDto) {
+  @Exclude()
+  idpId: string;
+
   @IsString()
   @IsOptional()
   @ApiProperty({

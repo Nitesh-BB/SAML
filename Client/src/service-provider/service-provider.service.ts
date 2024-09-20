@@ -12,7 +12,7 @@ export class ServiceProviderService {
   constructor(private readonly httpService: HttpService) {}
 
   private idp: any;
-  private sp: any;
+  private sp: samlify.ServiceProviderInstance;
 
   async getIdpMetadata(): Promise<any> {
     try {
@@ -76,6 +76,7 @@ export class ServiceProviderService {
       const result = this.sp.createLoginRequest(this.idp, 'redirect');
 
       const { context } = result;
+
       return res.redirect(context);
     } catch (err) {
       this.logger.error(
@@ -88,6 +89,7 @@ export class ServiceProviderService {
   async spInitiatedPost(req: any, res: any) {
     try {
       const result = this.sp.createLoginRequest(this.idp, 'post');
+      console.log(result);
       return res.render('sp-post', result);
     } catch (err) {
       this.logger.error('Error in creating login post request: ' + err.message);
@@ -98,9 +100,9 @@ export class ServiceProviderService {
   async spInitiatedLogout(req: any, res: any) {
     try {
       const result = this.sp.createLogoutRequest(this.idp, 'post', {
-        logoutNameID: 'user@esaml2',
+        logoutNameID: 'nitesh@mollatech.com',
       });
-      console.log(result);
+
       return res.render('sp-post', result);
     } catch (err) {
       this.logger.error('Error in creating logout request: ' + err.message);
@@ -111,25 +113,11 @@ export class ServiceProviderService {
   async acs(req: any, res: any) {
     this.logger.log('ACS request received');
     try {
-      // const decodedString = Buffer.from(
-      //   req.body.SAMLResponse,
-      //   'base64',
-      // ).toString('ascii');
-      // const { issuer } = samlify.Extractor.extract(decodedString, [
-      //   {
-      //     key: 'issuer',
-      //     localPath: ['Response', 'Issuer'],
-      //     attributes: [],
-      //   },
-      // ]);
-
       const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
-
-      console.log(result);
 
       const { extract } = result;
       this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
-      return res.json(result);
+      return res.render('acs', result);
     } catch (err) {
       this.logger.error('Error in acs: ', err);
       throw new HttpException(err.message, err.status || 500);

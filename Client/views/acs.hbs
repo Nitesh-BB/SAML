@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SAML Response Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+          .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            
+            
+        }
+
+        .logo img {
+            max-width: 100px;
+            height: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 22px;
+            color: #0056b3;
+            border-bottom: 2px solid #d3dfee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 20px;
+        }
+
+        .info-item {
+            background-color: #f7faff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #d3dfee;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .info-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 85, 179, 0.15);
+        }
+
+        .info-item p {
+            margin: 5px 0;
+            color: #444;
+        }
+
+        .info-item p strong {
+            color: #0056b3;
+        }
+
+        /* Buttons */
+        .button {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+       .logout {
+            background-color: #dc3545 !important;
+
+        }
+
+        .button:hover {
+            background-color: #003d80;
+        }
+
+        /* Accordion Styles */
+        .accordion {
+            cursor: pointer;
+            padding: 15px;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 18px;
+            background-color: #0056b3;
+            color: #fff;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion:hover,
+        .accordion.active {
+            background-color: #003d80;
+        }
+
+        .accordion:after {
+            content: '\25bc';
+            float: right;
+            transform: rotate(0deg);
+            transition: transform 0.3s ease;
+        }
+
+        .accordion.active:after {
+            transform: rotate(180deg);
+        }
+
+        .panel {
+            padding: 0 15px;
+            background-color: #fff;
+            display: none;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #d3dfee;
+            border-top: none;
+        }
+
+        .panel pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f4f6f8;
+            padding: 20px;
+            font-size: 14px;
+            color: #333;
+            border-radius: 0 0 8px 8px;
+            margin: 0;
+            overflow-x: auto;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="logo">
+    <img src="https://cdn.worldvectorlogo.com/logos/saml-1.svg" alt="SAML Logo">
+</div>
+    <h1>SAML Response Details</h1>
+
+    <div class="container">
+
+        <!-- Buttons -->
+        <button class="button" id="toggleExtractedData">Show/Hide Extracted Data</button>
+        <button class="button" id="copySamlResponse">Copy SAML Response</button>
+        
+        <form action="/sp/logout" method="post">
+            <button class="button logout" type="submit">Logout</button>
+        </form>
+       
+
+        <!-- General Information Section -->
+        <div class="section extracted-data">
+            <h2>General Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <p><strong>Issuer:</strong> {{extract.issuer}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>Audience:</strong> {{extract.audience}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>NameID:</strong> {{extract.nameID}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>Response ID:</strong> {{extract.response.id}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions Section -->
+        <div class="section extracted-data">
+            <h2>Conditions</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <p><strong>Not Before:</strong> {{extract.conditions.notBefore}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>Not On Or After:</strong> {{extract.conditions.notOnOrAfter}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Information Section -->
+        <div class="section extracted-data">
+            <h2>Session Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <p><strong>Authn Instant:</strong> {{extract.sessionIndex.authnInstant}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>Session Not On Or After:</strong> {{extract.sessionIndex.sessionNotOnOrAfter}}</p>
+                </div>
+                <div class="info-item">
+                    <p><strong>Session Index:</strong> {{extract.sessionIndex.sessionIndex}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attributes Section -->
+        <div class="section extracted-data">
+            <h2>Attributes</h2>
+            <div class="info-grid">
+                {{#each extract.attributes}}
+                <div class="info-item">
+                    <p><strong>{{@key}}:</strong> {{this}}</p>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- SAML Response Accordion -->
+        <button class="accordion">View SAML Response</button>
+        <div class="panel">
+            <pre id="samlContent">{{samlContent}}</pre>
+        </div>
+
+    </div>
+
+    <script>
+        // Accordion functionality
+        const accordion = document.querySelector('.accordion');
+        const panel = document.querySelector('.panel');
+        const copyButton = document.getElementById('copySamlResponse');
+        const toggleButton = document.getElementById('toggleExtractedData');
+        const extractedDataSections = document.querySelectorAll('.extracted-data');
+
+        accordion.addEventListener('click', function () {
+            this.classList.toggle('active');
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+
+        // Copy SAML response to clipboard
+        copyButton.addEventListener('click', function () {
+            const samlResponse = document.getElementById('samlContent').textContent;
+            navigator.clipboard.writeText(samlResponse).then(() => {
+                alert('SAML Response copied to clipboard!');
+            }, () => {
+                alert('Failed to copy the SAML Response.');
+            });
+        });
+
+        // Toggle visibility of extracted SAML data
+        toggleButton.addEventListener('click', function () {
+            extractedDataSections.forEach(section => {
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            });
+        });
+
+        // Initially hide extracted data
+        extractedDataSections.forEach(section => {
+            section.style.display = 'block';
+        });
+    </script>
+
+</body>
+
+</html>

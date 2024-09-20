@@ -16,6 +16,7 @@ import { MessageSigningOrderEnum } from './enums/message-signing-order.enum';
 import { NameIDFormatEnum } from './enums/name-id.enum';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
+import { max } from 'class-validator';
 samlify.setSchemaValidator(validator);
 
 interface User {
@@ -192,7 +193,7 @@ export class IdpService {
         encryptCert: idp.encryptCert,
         privateKey: idp.privateKey,
         encPrivateKey: idp.encPrivateKey,
-        //singleLogoutService,
+        singleLogoutService,
         singleSignOnService,
         isAssertionEncrypted: idp.isAssertionEncrypted,
         messageSigningOrder: idp.messageSigningOrder,
@@ -214,18 +215,86 @@ export class IdpService {
 
   async loginPost(req: any, res: any, binding = 'post', idpId: string) {
     try {
+      // Check for session cookie first
+
+      const forceLogin = req.query?.forceLogin === 'true' ? true : false;
+
+      const sessionCookie = req.cookies?.sessionIndex;
+
+      if (sessionCookie && !forceLogin) {
+        this.logger.log(`Session cookie found. Sending direct login response.`);
+
+        const userSession = await this.sessionModel.findOne({
+          _id: sessionCookie,
+        });
+
+        if (userSession && userSession.session && userSession.user) {
+          const { session } = userSession;
+
+          const { issuer, relayState = '' } = session;
+          const [idpData, spMetaData] = await Promise.all([
+            this.getIdp(idpId),
+            this.serviceProviderService.getSpMetadataByEntityId(issuer, idpId),
+          ]);
+
+          // Initialize SP and IdP
+          const sp = samlify.ServiceProvider({ metadata: spMetaData });
+          const idpMetaData = await this.getMetaData(idpId);
+          const idp = samlify.IdentityProvider({
+            metadata: idpMetaData,
+            privateKey: idpData.privateKey,
+            encPrivateKey: idpData.encPrivateKey,
+            messageSigningOrder: idpData.messageSigningOrder,
+            loginResponseTemplate: loginResponseTemplate({
+              attributes: idpData.attributes,
+            }),
+          });
+
+          console.log(`fetched sp and idp metadata`);
+
+          const result = await idp.createLoginResponse(
+            sp,
+            {
+              extract: {
+                request: {
+                  id: userSession.session.requestId,
+                },
+              },
+            },
+            'post',
+            userSession.user,
+            this.createTemplateCallback(
+              idp,
+              sp,
+              'post',
+              userSession.user,
+              userSession.session.requestId,
+              userSession,
+            ),
+            idpData.messageSigningOrder ===
+              MessageSigningOrderEnum.ENCRYPT_THEN_SIGN,
+            relayState || idpData.defaultRelayState,
+          );
+
+          return res.render('sp-post', result);
+        }
+      }
+
+      // No session cookie, proceed with normal SAML processing
       let SAMLRequest: string, decodedString: string, relayState: string;
+
       if (binding === 'post') {
         SAMLRequest = req.body.SAMLRequest;
-        decodedString = Buffer.from(SAMLRequest, 'base64').toString('ascii');
         relayState = req.body.RelayState;
       } else {
         SAMLRequest = req.query.SAMLRequest;
         relayState = req.query.RelayState;
-        decodedString = samlify.Utility.inflateString(
-          decodeURIComponent(SAMLRequest),
-        );
       }
+
+      decodedString =
+        binding === 'post'
+          ? Buffer.from(SAMLRequest, 'base64').toString('ascii')
+          : samlify.Utility.inflateString(decodeURIComponent(SAMLRequest));
 
       const { issuer } = samlify.Extractor.extract(decodedString, [
         {
@@ -254,7 +323,6 @@ export class IdpService {
           issuer,
           idpId,
         );
-
       const sp = samlify.ServiceProvider({
         metadata: spMetadata,
       });
@@ -263,19 +331,41 @@ export class IdpService {
 
       this.logger.log(`Creating Session for EntityId ${issuer}`);
 
+      // Set session information
       req.session.requestId = extract.request.id;
       req.session.authenticator = idpData.entityID;
       req.session.relayState = relayState;
       req.session.issuer = issuer;
       req.session.idpId = idpId;
-      //req.session.user = null;
+
+      req.session.cookie.maxAge = idpData.sessionTTl || 24 * 60 * 60 * 1000;
+
+      res.cookie('sessionIndex', req.session.id, {
+        httpOnly: true,
+        secure: true,
+        maxAge: idpData.sessionTTl || 24 * 60 * 60 * 1000,
+      });
+
       return res.redirect(
         `${idpData.ssoUrl}?requestId=${extract.request.id}&idpId=${idpId}`,
       );
     } catch (error) {
-      this.logger.error(error.message);
+      this.logger.error(`Error in loginPost: ${error.message}`);
       throw new HttpException(
-        error.message,
+        `Failed to process SAML request: ${error.message}`,
+        error.status || HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
+  async loginRedirect(req: any, res: any, idpId: string) {
+    try {
+      req.octetString = this.buildOctetStringFromQuery(req.query);
+      return this.loginPost(req, res, 'redirect', idpId);
+    } catch (error) {
+      this.logger.error(`Error in loginRedirect: ${error.message}`);
+      throw new HttpException(
+        `Failed to handle SAML redirect: ${error.message}`,
         error.status || HttpStatus.BAD_GATEWAY,
       );
     }
@@ -285,20 +375,32 @@ export class IdpService {
     try {
       this.logger.log('Creating Session');
 
-      // Validate requestId from the request
       const { requestId } = req.query;
       if (!requestId) {
         throw new HttpException(
-          'Invalid Session, Please Try Again',
+          'Invalid Request, No Request Id Found',
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      // Fetch session data
+      if (!req.body)
+        throw new HttpException(
+          'Invalid Request, No User Data Found in Request',
+          HttpStatus.BAD_REQUEST,
+        );
+
+      if (!req.body.nameID && !req.body.email) {
+        throw new HttpException(
+          'Invalid Request, nameID or email is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const savedSession = await this.sessionModel.findOne({
         'session.requestId': requestId,
       });
-      if (!savedSession) {
+
+      if (!savedSession || !savedSession.session) {
         throw new HttpException(
           'Invalid Session, Please Try Again',
           HttpStatus.BAD_REQUEST,
@@ -306,6 +408,7 @@ export class IdpService {
       }
 
       const { session } = savedSession;
+
       const { idpId, issuer, relayState = '' } = session;
 
       // Fetch IdP data
@@ -335,7 +438,14 @@ export class IdpService {
         info,
         'post',
         user,
-        this.createTemplateCallback(idp, sp, 'post', user, requestId),
+        this.createTemplateCallback(
+          idp,
+          sp,
+          'post',
+          user,
+          requestId,
+          savedSession,
+        ),
         idpData.messageSigningOrder ===
           MessageSigningOrderEnum.ENCRYPT_THEN_SIGN,
         relayState || idpData.defaultRelayState,
@@ -344,14 +454,6 @@ export class IdpService {
       // Update and save session with user data
       savedSession.user = user;
       await savedSession.save();
-
-      // Set cookie with session details
-      this.setSessionCookie(
-        res,
-        result.sessionIndex,
-        user.email || user.nameID,
-        user,
-      );
 
       this.logger.log('Login Response created, redirecting to SP');
       return res.render('sp-post', result);
@@ -365,166 +467,10 @@ export class IdpService {
   }
 
   // Utility function to set session in cookie
-  private setSessionCookie(
-    res: any,
-    sessionIndex: string,
-    nameID: string,
-    user: any,
-  ) {
-    res.cookie(
-      'SAMLResponse',
-      JSON.stringify({
-        sessionIndex,
-        nameID,
-        attributes: user,
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60, // 1 hour session expiration
-      },
-    );
-  }
-
-  // async createSession(req: any, res: any) {
-  //   try {
-  //     this.logger.log(`Creating Session `);
-  //     const { requestId } = req.query;
-
-  //     if (!requestId) {
-  //       throw new HttpException(
-  //         'Invalid Session,Please Try Again',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-
-  //     const savedSession = await this.sessionModel.findOne({
-  //       'session.requestId': requestId,
-  //     });
-
-  //     if (!savedSession) {
-  //       throw new HttpException(
-  //         'Invalid Session,Please Try Again',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-
-  //     const { session } = savedSession;
-  //     const { idpId } = session;
-  //     this.logger.log(
-  //       `Got Session for requestId ${requestId} JSON ${JSON.stringify(
-  //         session,
-  //       )}`,
-  //     );
-  //     const idpData = await this.getIdp(idpId);
-
-  //     const spMetaData =
-  //       await this.serviceProviderService.getSpMetadataByEntityId(
-  //         session.issuer,
-  //         session.idpId,
-  //       );
-  //     const sp = samlify.ServiceProvider({
-  //       metadata: spMetaData,
-  //     });
-
-  //     const idpMetaData = await this.getMetaData(idpId);
-  //     const idp = samlify.IdentityProvider({
-  //       metadata: idpMetaData,
-  //       privateKey: idpData.privateKey,
-  //       encPrivateKey: idpData.encPrivateKey,
-  //       messageSigningOrder: idpData.messageSigningOrder,
-  //       loginResponseTemplate: loginResponseTemplate({
-  //         attributes: idpData.attributes,
-  //       }),
-  //     });
-  //     const info = { extract: { request: { id: requestId } } };
-  //     const user = req.body;
-
-  //     this.logger.log('Creating Login Response for Service Provider');
-  //     const result = await idp.createLoginResponse(
-  //       sp,
-  //       info,
-  //       'post',
-  //       user,
-  //       this.createTemplateCallback(idp, sp, 'post', user, requestId),
-
-  //       idpData.messageSigningOrder ===
-  //         MessageSigningOrderEnum.ENCRYPT_THEN_SIGN
-  //         ? true
-  //         : false,
-  //       session.relayState || idpData.defaultRelayState || '',
-  //     );
-
-  //     savedSession.user = user;
-  //     await savedSession.save();
-
-  //     // save cookie for user
-
-  //     this.logger.log('Login Resonse created ,redirecting to SP');
-  //     return res.render('sp-post', result);
-  //   } catch (error) {
-  //     this.logger.error('Error in creating session', error.message);
-  //     throw new HttpException(
-  //       error.message,
-  //       error.status || HttpStatus.BAD_GATEWAY,
-  //     );
-  //   }
-  // }
-
-  async loginRedirect(req: any, res: any, idpId: string) {
-    // if (req.session) {
-    //   const SAMLRequest = req.query.SAMLRequest;
-
-    //   const decodedString = Buffer.from(SAMLRequest, 'base64').toString(
-    //     'ascii',
-    //   );
-    //   const { issuer } = samlify.Extractor.extract(decodedString, [
-    //     {
-    //       key: 'issuer',
-    //       localPath: ['AuthnRequest', 'Issuer'],
-    //       attributes: [],
-    //     },
-    //   ]);
-    //   this.logger.log('SAML Request From EntityId', issuer);
-
-    //   if (req.session.spEntityId === issuer && req.session?.user !== {}) {
-    //     const { user, idpId } = req.session;
-    //     const spMetaData = await this.serviceProviderService.getMetaData(idpId);
-    //     const sp = samlify.ServiceProvider({
-    //       metadata: spMetaData,
-    //     });
-
-    //     const idpMetaData = await this.getMetaData(idpId);
-    //     const idp = samlify.IdentityProvider({
-    //       metadata: idpMetaData,
-    //     });
-    //     const { extract } = await idp.parseLoginRequest(sp, 'redirect', req);
-    //     //  const info = { extract: { request: { id: requestId } } };
-    //     const result = await idp.createLoginResponse(
-    //       sp,
-    //       extract,
-    //       'post',
-    //       user,
-    //       this.createTemplateCallback(
-    //         idp,
-    //         sp,
-    //         'post',
-    //         user,
-    //         extract.request.id,
-    //       ),
-    //     );
-    //     return res.render('sp-post', result);
-    //   }
-    // } else {
-    req.octetString = this.buildOctetStringFromQuery(req.query);
-    return this.loginPost(req, res, 'redirect', idpId);
-    //}
-
-    //
-  }
 
   async logoutPost(req: any, res: any, binding: string, idpId: string) {
     try {
+      console.log('Logout Request Received', { binding, idpId });
       let SAMLRequest: string, decodedString: string, relayState: string;
 
       if (binding === 'post') {
@@ -538,9 +484,6 @@ export class IdpService {
           decodeURIComponent(SAMLRequest),
         );
       }
-      this.logger.log(
-        `Logout Request Received, Binding: ${binding}, ${decodedString} ${relayState} ${SAMLRequest}`,
-      );
 
       const { issuer } = samlify.Extractor.extract(decodedString, [
         {
@@ -580,14 +523,20 @@ export class IdpService {
 
       const { extract } = await idp.parseLogoutRequest(sp, binding, req);
 
-      this.logger.log(
-        'Logout Request Parsed, Creating Logout Response',
-        extract,
+      const result = idp.createLogoutResponse(
+        sp,
+        { extract: { request: { id: extract.request.id } } },
+        binding,
+        relayState,
       );
-      const result = idp.createLogoutResponse(sp, extract, binding, relayState);
-      this.logger.log(
-        `Response Created, Redirecting to SP json: ${JSON.stringify(result)}`,
-      );
+
+      const sessionCookie = req.cookies?.sessionIndex;
+
+      if (sessionCookie) {
+        await this.sessionModel.deleteOne({ _id: sessionCookie });
+
+        res.clearCookie('sessionIndex');
+      }
 
       return res.render('sp-post', result);
     } catch (error) {
@@ -611,18 +560,26 @@ export class IdpService {
   }
 
   createTemplateCallback =
-    (_idp: any, _sp: any, _binding: string, user: any, id: string) =>
+    (
+      _idp: any,
+      _sp: any,
+      _binding: string,
+      user: any,
+      requestId: string,
+      savedSession: any,
+    ) =>
     (template) => {
-      console.log('User', user);
       const now = new Date();
       const spEntityID = _sp.entityMeta.getEntityID();
       const idpSetting = _idp.entitySetting;
 
-      const fiveMinutesLater = new Date(now.getTime());
-      fiveMinutesLater.setMinutes(fiveMinutesLater.getMinutes() + 5);
-      const sessionIndex = `_${uuid.v4()}`;
+      const sessionExpiresIn = savedSession?.expires
+        ? new Date(savedSession.expires)
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const sessionIndex = savedSession?._id || uuid.v4();
       const tvalue = {
-        ID: id,
+        ID: requestId,
         AssertionID: idpSetting.generateID
           ? idpSetting.generateID()
           : `${uuid.v4()}`,
@@ -630,20 +587,20 @@ export class IdpService {
         Audience: spEntityID,
         SubjectRecipient: _sp.entityMeta.getAssertionConsumerService(_binding),
         NameIDFormat: _idp.entitySetting.nameIDFormat,
-        NameID: user.email,
+        NameID: user.nameID || user.email,
         Issuer: _idp.entityMeta.getEntityID(),
         IssueInstant: now.toISOString(),
         ConditionsNotBefore: now.toISOString(),
-        ConditionsNotOnOrAfter: fiveMinutesLater.toISOString(),
-        SubjectConfirmationDataNotOnOrAfter: fiveMinutesLater.toISOString(),
+        ConditionsNotOnOrAfter: sessionExpiresIn.toISOString(),
+        SubjectConfirmationDataNotOnOrAfter: sessionExpiresIn.toISOString(),
         AssertionConsumerServiceURL:
           _sp.entityMeta.getAssertionConsumerService(_binding),
         EntityID: spEntityID,
-        InResponseTo: id,
+        InResponseTo: requestId,
         StatusCode: 'urn:oasis:names:tc:SAML:2.0:status:Success',
 
         AuthnStatement: `
-                <saml:AuthnStatement AuthnInstant="${now.toISOString()}" SessionNotOnOrAfter="${fiveMinutesLater.toISOString()}" SessionIndex="${sessionIndex}">
+                <saml:AuthnStatement AuthnInstant="${now.toISOString()}" SessionNotOnOrAfter="${sessionExpiresIn.toISOString()}" SessionIndex="${sessionIndex}">
                     <saml:AuthnContext>
                         <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:Password</saml:AuthnContextClassRef>
                     </saml:AuthnContext>
@@ -662,7 +619,7 @@ export class IdpService {
       }
 
       return {
-        id: id,
+        id: requestId,
         context: samlify.SamlLib.replaceTagsByValue(template, tvalue),
       };
     };
@@ -678,6 +635,8 @@ export class IdpService {
       }
 
       await this.idpModel.deleteOne({ idpId });
+
+      await this.sessionModel.deleteMany({ 'session.idpId': idpId });
       return {
         message: 'Idp Deleted Successfully',
       };

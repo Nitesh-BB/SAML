@@ -3,6 +3,7 @@ import {
   IsDefined,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -75,6 +76,15 @@ export class CreateIdpDto {
   @Type(() => AttributesDto)
   @ValidateNested({ each: true })
   attributes: AttributesDto[];
+
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty({
+    example: 7 * 24 * 60 * 60 * 1000,
+    default: 7 * 24 * 60 * 60 * 1000,
+    description: 'Session Time to Live in milliseconds',
+  })
+  sessionTTl: number;
 }
 
 export class AttributesDto {

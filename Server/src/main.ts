@@ -7,6 +7,7 @@ import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import * as connectMongo from 'connect-mongodb-session';
+import * as cookieParser from 'cookie-parser';
 
 import * as express from 'express';
 const port = process.env.PORT || 4000;
@@ -19,21 +20,18 @@ async function bootstrap() {
   app.enableCors();
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  app.use(cookieParser());
   app.use(
     session({
       store: new MongoStore({
         uri: process.env.MONGO_URI,
         collection: 'sessions',
       }),
-
       secret: process.env.SESSION_SECRET, // to sign session id
       resave: false, // will default to false in near future: https://github.com/expressjs/session#resave
       saveUninitialized: false, // will default to false in near future: https://github.com/expressjs/session#saveuninitialized
       rolling: true, // keep session alive
-      cookie: {
-        maxAge: 24 * 60 * 60 * 1000, // session expires in 1hr, refreshed by `rolling: true` option.
-        httpOnly: true, // so that cookie can't be accessed via client-side script
-      },
     }),
   );
 

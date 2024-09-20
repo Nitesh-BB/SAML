@@ -1,23 +1,15 @@
+import { PartialType } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { CreateIdpDto } from 'src/idp/dto/create-idp.dto';
+import { CreateServiceProviderDto } from './create-service-provider.dto';
+import { Exclude } from 'class-transformer';
 
-export class UpdateServiceProviderDto {
-  @IsOptional()
-  @IsString()
-  acsUrl?: string;
+export class UpdateServiceProviderDto extends PartialType(
+  CreateServiceProviderDto,
+) {
+  @Exclude()
+  idpId: string;
 
-  @IsOptional()
-  @IsBoolean()
-  wantMessageSigned?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  authnRequestsSigned?: boolean;
-
-  @IsOptional()
-  @IsString()
-  signingCert?: string;
-
-  @IsOptional()
-  @IsString()
-  encryptCert?: string;
+  @Exclude()
+  spId: string;
 }

@@ -1,13 +1,80 @@
-<form id="saml-form" method="post" action="{{entityEndpoint}}" autocomplete="off">
-    <input name="{{type}}" hidden value="{{context}}" />
-    {{#if relayState}}
-    <input name="RelayState" hidden value="{{relayState}}" />
-    {{/if}}
-</form>
-<script type="text/javascript">
-    //console.log('{{context}}');
-    // Automatic form submission
-    (function () {
-        document.forms[0].submit();
-    })();
-</script>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitting...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e2ebf0, #f5f7f9);
+        }
+
+        .message-container {
+            text-align: center;
+        }
+
+        .message-container h1 {
+            color: #0056b3;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #0056b3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        form {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="message-container">
+        <h1>Please wait while we redirect...</h1>
+        <div class="spinner"></div>
+    </div>
+
+    <form id="saml-form" method="post" action="{{entityEndpoint}}" autocomplete="off">
+        <input name="{{type}}" hidden value="{{context}}" />
+        {{#if relayState}}
+        <input name="RelayState" hidden value="{{relayState}}" />
+        {{/if}}
+    </form>
+
+    <script type="text/javascript">
+        // Automatically submit the form after a short delay
+        (function () {
+            setTimeout(function () {
+                document.forms[0].submit();
+            }, 1000); // 1-second delay for better UX
+        })();
+    </script>
+</body>
+
+</html>
