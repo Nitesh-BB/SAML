@@ -43,8 +43,9 @@ export class ServiceProviderService {
           'utf8',
         ),
 
-        privateKey: fs.readFileSync('./encryptKey.pem'),
+        // privateKey: fs.readFileSync('./signcert.pem'),
         encPrivateKey: fs.readFileSync('./encryptKey.pem'),
+        privateKey: fs.readFileSync('./signpriv.pem'),
         // entityID: `http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5`,
         // assertionConsumerService: [
         //   {
@@ -53,7 +54,7 @@ export class ServiceProviderService {
         //   },
         // ],
 
-        // wantMessageSigned: true,
+        wantMessageSigned: false,
         // authnRequestsSigned: true,
 
         // signingCert: fs.readFileSync('./encryptionCert.pem'),
@@ -63,6 +64,7 @@ export class ServiceProviderService {
         'Service Provider loaded',
         sp.entityMeta.getAssertionConsumerService('post'),
       );
+
       this.logger.log('Service Provider metadata loaded');
     } catch (error) {
       this.logger.error('Error in getSp: ' + error);
@@ -115,13 +117,13 @@ export class ServiceProviderService {
   async acs(req: any, res: any) {
     this.logger.log('ACS request received');
     try {
-      // const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
+      const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
 
-      // const { extract } = result;
-      // this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
-      // return res.render('acs', result);
+      const { extract } = result;
+      this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
+      return res.render('acs', result);
 
-      return res.json(req.body);
+      //return res.json(req.body);
     } catch (err) {
       console.log(err);
       this.logger.error('Error in acs: ', err);

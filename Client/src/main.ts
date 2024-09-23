@@ -4,6 +4,10 @@ import { AppModule } from './app.module';
 import * as express from 'express';
 import { join } from 'path';
 
+import * as passport from 'passport';
+import { Strategy } from 'passport-saml';
+import * as fs from 'fs';
+
 const port = process.env.PORT || 3000;
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
