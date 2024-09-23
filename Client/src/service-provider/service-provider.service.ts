@@ -23,6 +23,7 @@ export class ServiceProviderService {
       this.idp = samlify.IdentityProvider({
         metadata: response.data,
       });
+
       this.logger.log('IDP metadata loaded');
     } catch (error) {
       this.logger.error('Error in Getting Metadata: ' + error.message);
@@ -37,24 +38,25 @@ export class ServiceProviderService {
     try {
       this.logger.log('Getting Service Provider from metadata file');
       const sp = samlify.ServiceProvider({
-        // metadata: fs.readFileSync(
-        //   './src/service-provider/sp-metadata.xml',
-        //   'utf8',
-        // ),
+        metadata: fs.readFileSync(
+          './src/service-provider/sp-metadata.xml',
+          'utf8',
+        ),
 
         privateKey: fs.readFileSync('./encryptKey.pem'),
-        entityID: `http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5`,
-        assertionConsumerService: [
-          {
-            Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-            Location: `http://localhost:8080/sp/acs`,
-          },
-        ],
+        encPrivateKey: fs.readFileSync('./encryptKey.pem'),
+        // entityID: `http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5`,
+        // assertionConsumerService: [
+        //   {
+        //     Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+        //     Location: `http://localhost:8080/sp/acs`,
+        //   },
+        // ],
 
-        //wantMessageSigned: true,
-        authnRequestsSigned: false,
+        // wantMessageSigned: true,
+        // authnRequestsSigned: true,
 
-        signingCert: fs.readFileSync('./encryptionCert.pem'),
+        // signingCert: fs.readFileSync('./encryptionCert.pem'),
       });
       this.sp = sp;
       this.logger.log(
@@ -89,7 +91,7 @@ export class ServiceProviderService {
   async spInitiatedPost(req: any, res: any) {
     try {
       const result = this.sp.createLoginRequest(this.idp, 'post');
-      console.log(result);
+
       return res.render('sp-post', result);
     } catch (err) {
       this.logger.error('Error in creating login post request: ' + err.message);
@@ -113,12 +115,15 @@ export class ServiceProviderService {
   async acs(req: any, res: any) {
     this.logger.log('ACS request received');
     try {
-      const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
+      // const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
 
-      const { extract } = result;
-      this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
-      return res.render('acs', result);
+      // const { extract } = result;
+      // this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
+      // return res.render('acs', result);
+
+      return res.json(req.body);
     } catch (err) {
+      console.log(err);
       this.logger.error('Error in acs: ', err);
       throw new HttpException(err.message, err.status || 500);
     }

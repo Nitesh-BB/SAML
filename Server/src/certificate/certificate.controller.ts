@@ -9,6 +9,6 @@ export class CertificateController {
   constructor(private readonly certificateService: CertificateService) {}
   @Post('create')
   async createCertificate(@Body() body: GenerateCertificateDto) {
-    return this.certificateService.generateSelfSignedCertificate(body);
+    return this.certificateService.generateCertificate(body);
   }
 }

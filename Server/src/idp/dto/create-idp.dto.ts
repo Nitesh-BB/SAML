@@ -34,7 +34,7 @@ export class CreateIdpDto {
   nameIdFormat: NameIDFormatEnum;
 
   @ApiProperty({
-    example: 'https://sp.com/acs',
+    example: 'http://localhost:4000/login',
   })
   @IsNotEmpty()
   ssoUrl: string;
@@ -42,7 +42,7 @@ export class CreateIdpDto {
   @IsString()
   @IsOptional()
   @ApiProperty({
-    example: 'https://sp.com/slo',
+    example: 'http://localhost:4000/logout',
   })
   sloUrl: string;
 

@@ -1,1 +1,16 @@
-<EntityDescriptor entityID="http://localhost:8080/sp/metadata" xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:assertion="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"><NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat><SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:8080/logout"></SingleLogoutService><AssertionConsumerService index="0" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:8080/sp/acs"></AssertionConsumerService></SPSSODescriptor></EntityDescriptor>
+<EntityDescriptor entityID="http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5" xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:assertion="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+  <SPSSODescriptor AuthnRequestsSigned="true" WantAssertionsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIID3TCCAsWgAwIBAgIOBTPmLzxUP/uq9uEfBx0wDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAklOMRQwEgYDVQQIDAtNYWhhcmFzaHRyYTENMAsGA1UEBwwEUHVuZTEUMBIGA1UECgwLYmx1ZS1icmlja3MxETAPBgNVBAsMCFNBTUwtU1NPMSQwIgYDVQQDDBtodHRwczovL3d3dy5ibHVlLWJyaWNrcy5jb20wIBcNMjQwOTIwMTIxMDEwWhgPMjAyNTA5MjAxMjEwMTBaMH4xCzAJBgNVBAYTAklOMRQwEgYDVQQIDAtNYWhhcmFzaHRyYTENMAsGA1UEBwwEUHVuZTEUMBIGA1UECgwLYmx1ZS1icmlja3MxEjAQBgNVBAsMCURldmVsb3BlcjEgMB4GA1UEAwwXaHR0cHM6Ly9ibHVlLWJyaWNrcy5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDw6FAU+t8iDW9dr5FGM5mXDM8+PznTb6hqyF07LyZL8PqB4vpXMJh+Fyb/m5PSQ/Ut7CyO7xEBlns7f62EBEzIqvgrmRX6afXUObquA1Hfhdhmyc7zl91G78LI2EXm+VCeEysunZa/d1K0df7pidwKyg0d9d6e3MK5rZdtyKYm7+lA8WY6aWSX6m1uF6nc3JAsx9DCfA7B1ixGmWun934ZybNYwu9fOzcCjmhcdZxGmBqnSU6jIJQncJEbBp2Jc7uJizBq7alouKqJsqP+VqWxs9r8qZq5I7iNKANQjot8DAJxTU98zqLD71hUy2vbwYrqWThOE4g2s6yXhJWqAlqXAgMBAAGjUzBRMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFCh7n2xgl9NZBKjOq0Dbe/4uZaDJMB8GA1UdIwQYMBaAFCh7n2xgl9NZBKjOq0Dbe/4uZaDJMA0GCSqGSIb3DQEBCwUAA4IBAQBujhwUE1jTOvK6p8ueyWsD8oQtxcS8zNB1AG5Y6N5a/1PxOjbtXg+kxsmJn65O2OV2uerjiky3nSprPOFo4bkQ0qWQdCKRE/Yqbkjh7Yx14ZtTugrkiBT//uiztQy6CGQ0UhBha3PaNm2jozYc1Pj55dtaPjQ3xj1R+OO3mdo7aEWqrAkukvWdwK+L7DTImyMi4tirVf26fPMS99U6EVnRyNaZ1G0CkAMGXk+m3lmYFI8DtznR11hpUsAmnE5ITYBRoGc4Vn4XgqPbCMb4CTdRblDGt264x0qcmtMe2Zxn6Mn3g/Gn3aKR1FKSZgADmWzvPSetK3VaKXEpubT9Lgbi</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </KeyDescriptor>
+    <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
+    <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:8080/sp/slo">
+    </SingleLogoutService>
+    <AssertionConsumerService index="0" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:8080/sp/acs">
+    </AssertionConsumerService>
+  </SPSSODescriptor>
+</EntityDescriptor>

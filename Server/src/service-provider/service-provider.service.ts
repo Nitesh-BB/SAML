@@ -74,9 +74,11 @@ export class ServiceProviderService {
             Location: sp.acsUrl,
           },
         ],
+        wantAssertionsSigned: sp.wantAssertionsSigned,
         wantMessageSigned: sp.wantMessageSigned,
         authnRequestsSigned: sp.authnRequestsSigned,
         signingCert: sp.signingCert,
+        encryptCert: sp.encryptCert,
         singleLogoutService: [
           {
             Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',

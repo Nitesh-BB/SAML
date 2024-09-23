@@ -17,6 +17,7 @@ import { NameIDFormatEnum } from './enums/name-id.enum';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { max } from 'class-validator';
+import { IdpMetadata } from 'samlify/types/src/metadata-idp';
 samlify.setSchemaValidator(validator);
 
 interface User {
@@ -236,19 +237,13 @@ export class IdpService {
             this.getIdp(idpId),
             this.serviceProviderService.getSpMetadataByEntityId(issuer, idpId),
           ]);
-
+          console.log(`constructed idp and sp metadata`);
           // Initialize SP and IdP
-          const sp = samlify.ServiceProvider({ metadata: spMetaData });
-          const idpMetaData = await this.getMetaData(idpId);
-          const idp = samlify.IdentityProvider({
-            metadata: idpMetaData,
-            privateKey: idpData.privateKey,
-            encPrivateKey: idpData.encPrivateKey,
-            messageSigningOrder: idpData.messageSigningOrder,
-            loginResponseTemplate: loginResponseTemplate({
-              attributes: idpData.attributes,
-            }),
+          const sp = samlify.ServiceProvider({
+            metadata: spMetaData,
           });
+          const idpMetaData = await this.getMetaData(idpId);
+          const idp = this.getIdpInstance(idpMetaData, idpData);
 
           console.log(`fetched sp and idp metadata`);
 
@@ -308,15 +303,7 @@ export class IdpService {
 
       const idpData = await this.getIdp(idpId);
       const idpMetadata = await this.getMetaData(idpId);
-      const idp = samlify.IdentityProvider({
-        metadata: idpMetadata,
-        privateKey: idpData.privateKey,
-        encPrivateKey: idpData.encPrivateKey,
-        messageSigningOrder: idpData.messageSigningOrder,
-        loginResponseTemplate: loginResponseTemplate({
-          attributes: idpData.attributes,
-        }),
-      });
+      const idp = this.getIdpInstance(idpMetadata, idpData);
 
       const spMetadata =
         await this.serviceProviderService.getSpMetadataByEntityId(
@@ -371,6 +358,19 @@ export class IdpService {
     }
   }
 
+  private getIdpInstance(metadata: any, idp: Idp) {
+    return samlify.IdentityProvider({
+      messageSigningOrder: idp.messageSigningOrder,
+      isAssertionEncrypted: idp.isAssertionEncrypted,
+      metadata,
+      privateKey: idp.privateKey,
+      encPrivateKey: idp.encPrivateKey,
+      loginResponseTemplate: loginResponseTemplate({
+        attributes: idp.attributes,
+      }),
+    });
+  }
+
   async createSession(req: any, res: any) {
     try {
       this.logger.log('Creating Session');
@@ -418,17 +418,11 @@ export class IdpService {
       ]);
 
       // Initialize SP and IdP
-      const sp = samlify.ServiceProvider({ metadata: spMetaData });
-      const idpMetaData = await this.getMetaData(idpId);
-      const idp = samlify.IdentityProvider({
-        metadata: idpMetaData,
-        privateKey: idpData.privateKey,
-        encPrivateKey: idpData.encPrivateKey,
-        messageSigningOrder: idpData.messageSigningOrder,
-        loginResponseTemplate: loginResponseTemplate({
-          attributes: idpData.attributes,
-        }),
+      const sp = samlify.ServiceProvider({
+        metadata: spMetaData,
       });
+      const idpMetaData = await this.getMetaData(idpId);
+      const idp = this.getIdpInstance(idpMetaData, idpData);
 
       // Create user login response for SP
       const info = { extract: { request: { id: requestId } } };

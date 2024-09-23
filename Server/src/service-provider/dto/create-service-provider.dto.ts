@@ -17,21 +17,22 @@ export class CreateServiceProviderDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    example: 'https://sp.com/acs',
+    example:
+      'http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5',
   })
   entityID: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    example: 'https://sp.com/acs',
+    example: 'http://localhost:8080/sp/acs',
   })
   acsUrl: string;
 
   @IsOptional()
   @IsString()
   @ApiProperty({
-    example: 'https://sp.com/slo',
+    example: 'http://localhost:8080/sp/slo',
   })
   sloUrl: string;
 
@@ -56,4 +57,11 @@ export class CreateServiceProviderDto {
   @IsOptional()
   @IsString()
   encryptCert: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    default: false,
+  })
+  wantAssertionsSigned: boolean;
 }

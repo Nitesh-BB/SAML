@@ -88,6 +88,9 @@ export class CertificateService {
       ],
     });
 
+    console.log('certi', x.getPEM());
+    console.log('prv', prvpem);
+
     return {
       privateKey: prvpem.replace(/\r\n/g, '\n'),
       publicKey: pubpem,
@@ -95,30 +98,30 @@ export class CertificateService {
     };
   }
 
-  generateSelfSignedCertificate(
-    generateCertificateDto?: GenerateCertificateDto,
-  ) {
-    try {
-      this.logger.log('Generating self signed certificate');
-      /// const attrs = [{ name: 'commonName', value: 'contoso.com' }];
-      const attrs = [
-        {
-          value: generateCertificateDto.commonName,
-          type: 'server',
-          name: 'blue-bricks',
-        },
-      ];
-      const pems = selfsigned.generate(attrs, { days: 365 });
-      return {
-        privateKey: pems.private,
-        publicKey: pems.public,
-        certificate: pems.cert,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Error while generating self signed certificate: ${error}`,
-      );
-      throw new HttpException(error.message, error.status || 500);
-    }
-  }
+  // generateSelfSignedCertificate(
+  //   generateCertificateDto?: GenerateCertificateDto,
+  // ) {
+  //   try {
+  //     this.logger.log('Generating self signed certificate');
+  //     /// const attrs = [{ name: 'commonName', value: 'contoso.com' }];
+  //     const attrs = [
+  //       {
+  //         value: generateCertificateDto.commonName,
+  //         type: 'server',
+  //         name: 'blue-bricks',
+  //       },
+  //     ];
+  //     const pems = selfsigned.generate(attrs, { days: 365 });
+  //     return {
+  //       privateKey: pems.private,
+  //       publicKey: pems.public,
+  //       certificate: pems.cert,
+  //     };
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error while generating self signed certificate: ${error}`,
+  //     );
+  //     throw new HttpException(error.message, error.status || 500);
+  //   }
+  // }
 }

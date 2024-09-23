@@ -14,11 +14,20 @@ export class ServiceProvider {
   @Prop({ type: String, required: true })
   entityID: string;
 
-  @Prop()
+  @Prop({
+    default: false,
+  })
   wantMessageSigned: boolean;
 
-  @Prop()
+  @Prop({
+    default: false,
+  })
   authnRequestsSigned: boolean;
+
+  @Prop({
+    default: false,
+  })
+  wantAssertionsSigned: boolean;
 
   @Prop()
   signingCert: string;
