@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import * as samlify from 'samlify';
 import * as fs from 'fs';
 import * as validator from '@authenio/samlify-xsd-schema-validator';
+import { extract } from 'samlify/types/src/extractor';
 samlify.setSchemaValidator(validator);
 
 @Injectable()
@@ -22,6 +23,8 @@ export class ServiceProviderService {
       );
       this.idp = samlify.IdentityProvider({
         metadata: response.data,
+        isAssertionEncrypted: true,
+        messageSigningOrder: 'encrypt-then-sign',
       });
 
       this.logger.log('IDP metadata loaded');
@@ -37,6 +40,7 @@ export class ServiceProviderService {
   getSp() {
     try {
       this.logger.log('Getting Service Provider from metadata file');
+
       const sp = samlify.ServiceProvider({
         metadata: fs.readFileSync(
           './src/service-provider/sp-metadata.xml',
@@ -44,8 +48,8 @@ export class ServiceProviderService {
         ),
 
         // privateKey: fs.readFileSync('./signcert.pem'),
-        encPrivateKey: fs.readFileSync('./encryptKey.pem'),
-        privateKey: fs.readFileSync('./signpriv.pem'),
+        encPrivateKey: fs.readFileSync('./encryptKey.pem', 'utf-8'),
+        privateKey: fs.readFileSync('./signpriv.pem', 'utf-8'),
         // entityID: `http://localhost:8080/sp/entity/6e5400ce-cef4-4a24-89ad-42f304369df5`,
         // assertionConsumerService: [
         //   {
@@ -53,12 +57,22 @@ export class ServiceProviderService {
         //     Location: `http://localhost:8080/sp/acs`,
         //   },
         // ],
+        transformationAlgorithms: [
+          'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+          'http://www.w3.org/2001/10/xml-exc-c14n#',
+        ],
+
+        isAssertionEncrypted: true,
 
         wantMessageSigned: false,
-        // authnRequestsSigned: true,
+
+        // nameIDFormat: [
+        //   'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+        // ],
 
         // signingCert: fs.readFileSync('./encryptionCert.pem'),
       });
+
       this.sp = sp;
       this.logger.log(
         'Service Provider loaded',
@@ -118,12 +132,13 @@ export class ServiceProviderService {
     this.logger.log('ACS request received');
     try {
       const result = await this.sp.parseLoginResponse(this.idp, 'post', req);
+      console.log(result.extract);
+      return res.render('acs', {
+        extract: result.extract,
+        samlContent: req.body.SAMLResponse,
+      });
 
-      const { extract } = result;
-      this.logger.log(`ACS received data parsed: ${JSON.stringify(extract)}`);
-      return res.render('acs', result);
-
-      //return res.json(req.body);
+      //return res.json({ body: req.body, query: req.query });
     } catch (err) {
       console.log(err);
       this.logger.error('Error in acs: ', err);
