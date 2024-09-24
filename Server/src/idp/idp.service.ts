@@ -67,12 +67,6 @@ export class IdpService {
 
     const wantAssertionsSigned = spSettings.wantAssertionsSigned;
 
-    console.log({
-      isAssertionEncrypted,
-      wantAssertionsSigned,
-      wantMessageSigned,
-    });
-
     return spInstance;
   }
 
@@ -310,13 +304,11 @@ export class IdpService {
             this.getIdp(idpId),
             this.serviceProviderService.getSpMetadataByEntityId(issuer, idpId),
           ]);
-          console.log(`constructed idp and sp metadata`);
+
           // Initialize SP and IdP
           const sp = await this.spInstance(issuer, idpData);
 
           const idp = await this.getIdpInstance(idpId);
-
-          console.log(`fetched sp and idp metadata`);
 
           const result = await idp.createLoginResponse(
             sp,
@@ -383,11 +375,6 @@ export class IdpService {
           idpId,
         );
       const sp = await this.spInstance(issuer, idpData);
-
-      console.debug(
-        'sp wants assertion signed: ',
-        sp.entityMeta.isWantAssertionsSigned(),
-      );
 
       const { extract } = await idp.parseLoginRequest(sp, binding, req);
 
@@ -484,11 +471,6 @@ export class IdpService {
       const idpMetaData = await this.getMetaData(idpId);
       const idp = await this.getIdpInstance(idpId);
 
-      console.debug(
-        'after login : sp wants assertion signed: ',
-        sp.entityMeta.isWantAssertionsSigned(),
-      );
-
       // Create user login response for SP
       const info = { extract: { request: { id: requestId } } };
       const user = req.body;
@@ -530,7 +512,6 @@ export class IdpService {
 
   async logoutPost(req: any, res: any, binding: string, idpId: string) {
     try {
-      console.log('Logout Request Received', { binding, idpId });
       let SAMLRequest: string, decodedString: string, relayState: string;
 
       if (binding === 'post') {

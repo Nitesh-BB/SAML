@@ -24,7 +24,7 @@ export class ServiceProviderService {
       this.idp = samlify.IdentityProvider({
         metadata: response.data,
         isAssertionEncrypted: true,
-        messageSigningOrder: 'encrypt-then-sign',
+        messageSigningOrder: 'sign-then-encrypt',
       });
 
       this.logger.log('IDP metadata loaded');
@@ -138,11 +138,18 @@ export class ServiceProviderService {
         samlContent: req.body.SAMLResponse,
       });
 
+      //return res.render('acs', result);
+
       //return res.json({ body: req.body, query: req.query });
     } catch (err) {
       console.log(err);
       this.logger.error('Error in acs: ', err);
-      throw new HttpException(err.message, err.status || 500);
+      //throw new HttpException(err.message, err.status || 500);
+      res.json({
+        error: err.message,
+        status: err.status || 500,
+        debug: req.body,
+      });
     }
   }
 

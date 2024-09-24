@@ -2,14 +2,15 @@
 
 ### SAML 2.0 SAML Response feature testing checklist
 
-- [x] ⁠SAML case 1: Unsigned Assertion, <del>Unsigned</del> Signed Response, Without EncryptedAssertion
+- [x] ⁠SAML case 1: Unsigned Assertion, ~~Unsigned~~ Signed Response, Without EncryptedAssertion
 - [x] SAML case 2: Signed Assertion, Unsigned Response, Without EncryptedAssertion
 - [x] ⁠SAML case 3: Unsigned Assertion, Signed Response, Without EncryptedAssertion
-- [ ] ⁠SAML case 4: Unsigned Assertion, ~~Unsigned~~ Signed Response, With EncryptedAssertin
-- [ ] ⁠SAML case 5: Signed Assertion, Signed Response, Without EncryptedAssertin
-- [ ] ⁠SAML case 6: Signed Assertion, Unsigned Response, With EncryptedAssertin
-- [ ] SAML case 7: Unsigned Assertion, Signed Response, With EncryptedAssertion
-- [ ] ⁠SAML case 8: Signed Assertion, Signed Response, With EncryptedAssertion
+- [x] ⁠SAML case 4: Unsigned Assertion, ~~Unsigned~~ Signed Response, With EncryptedAssertion
+- [x] ⁠SAML case 5: Signed Assertion, Signed Response, Without EncryptedAssertion
+- [ ] ⁠SAML case 6: Signed Assertion, Unsigned Response, With EncryptedAssertion
+- [x] SAML case 7: Unsigned Assertion, Signed Response, With EncryptedAssertion
+- [x] ⁠SAML case 8: Signed Assertion, Signed Response, With EncryptedAssertion - with message signing order - "encrypt-then-sign"
+- [x] ⁠SAML case 9: Signed Assertion, Signed Response, With EncryptedAssertion - with message signing order - "sign-then-encrypt"
 
 Note: Either Assertion or Response or both will be always signed. Assertion can be encrypted or not encrypted.
 
