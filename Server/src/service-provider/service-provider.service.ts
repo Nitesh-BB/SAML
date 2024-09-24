@@ -66,7 +66,7 @@ export class ServiceProviderService {
         throw new HttpException('Service Provider not found', 404);
       }
 
-      const spMetaData = samlify.ServiceProvider({
+      const spInstance = samlify.ServiceProvider({
         entityID: sp.entityID,
         assertionConsumerService: [
           {
@@ -77,6 +77,7 @@ export class ServiceProviderService {
         wantAssertionsSigned: sp.wantAssertionsSigned,
         wantMessageSigned: sp.wantMessageSigned,
         authnRequestsSigned: sp.authnRequestsSigned,
+
         signingCert: sp.signingCert,
         encryptCert: sp.encryptCert,
         singleLogoutService: [
@@ -86,7 +87,9 @@ export class ServiceProviderService {
           },
         ],
       });
-      return spMetaData.getMetadata();
+      const spMetadata = spInstance.getMetadata();
+
+      return spMetadata;
     } catch (error) {
       throw new HttpException(
         error.message,
@@ -197,6 +200,54 @@ export class ServiceProviderService {
       return await this.serviceProviderModel.findOneAndDelete({
         $or: [{ entityID: id }, { spId: id }],
       });
+    } catch (error) {
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
+  async getSpInstance(entityId: string, idpId: string, idpData: any) {
+    try {
+      const sp = await this.serviceProviderModel.findOne({
+        entityID: entityId,
+        idpId,
+      });
+
+      if (!sp) {
+        throw new HttpException('Service Provider not found', 404);
+      }
+
+      const spInstance = samlify.ServiceProvider({
+        entityID: sp.entityID,
+        assertionConsumerService: [
+          {
+            Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+            Location: sp.acsUrl,
+          },
+        ],
+        isAssertionEncrypted: idpData.isAssertionEncrypted,
+        wantAssertionsSigned: sp.wantAssertionsSigned,
+        wantMessageSigned: sp.wantMessageSigned,
+        authnRequestsSigned: sp.authnRequestsSigned,
+        nameIDFormat: [idpData.nameIDFormat],
+        transformationAlgorithms: [
+          'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+          'http://www.w3.org/2001/10/xml-exc-c14n#',
+        ],
+
+        signingCert: sp.signingCert,
+        encryptCert: sp.encryptCert,
+        singleLogoutService: [
+          {
+            Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+            Location: sp.sloUrl || 'http://localhost:5000/sp/slo',
+          },
+        ],
+      });
+
+      return spInstance;
     } catch (error) {
       throw new HttpException(
         error.message,

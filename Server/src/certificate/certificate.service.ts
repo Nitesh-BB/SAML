@@ -33,6 +33,7 @@ export class CertificateService {
     const prv = kp.prvKeyObj;
     const pub = kp.pubKeyObj;
     const prvpem = rs.KEYUTIL.getPEM(prv, 'PKCS8PRV');
+
     const pubpem = rs.KEYUTIL.getPEM(pub, 'PKCS8PUB');
     const validTillDate = new Date(
       new Date().getTime() +
@@ -88,13 +89,17 @@ export class CertificateService {
       ],
     });
 
-    console.log('certi', x.getPEM());
+    console.log('certificate', x.getPEM());
     console.log('prv', prvpem);
 
+    const privateKey = prvpem.replace(/\r\n/g, '\n').replace(/\n+$/, ''); // Removes extra newlines at the end
+    const publicKey = pubpem.replace(/\r\n/g, '\n').replace(/\n+$/, ''); // Removes extra newlines at the end
+    const certificate = x.getPEM().replace(/\r\n/g, '\n').replace(/\n+$/, ''); // Removes extra newlines at the end
+
     return {
-      privateKey: prvpem.replace(/\r\n/g, '\n'),
-      publicKey: pubpem,
-      certificate: x.getPEM().replace(/\r\n/g, '\n'),
+      privateKey,
+      publicKey,
+      certificate,
     };
   }
 

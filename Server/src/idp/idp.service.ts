@@ -52,6 +52,79 @@ export class IdpService {
   private readonly logger = new Logger('IdpService');
   private readonly serverUrl = process.env.SERVER_URL;
 
+  private async spInstance(entityId: string, idpData: any) {
+    const spInstance = await this.serviceProviderService.getSpInstance(
+      entityId,
+      idpData.idpId,
+      idpData,
+    );
+
+    const spSettings = spInstance.entitySetting;
+
+    const isAssertionEncrypted = spSettings.isAssertionEncrypted;
+
+    const wantMessageSigned = spSettings.wantMessageSigned;
+
+    const wantAssertionsSigned = spSettings.wantAssertionsSigned;
+
+    console.log({
+      isAssertionEncrypted,
+      wantAssertionsSigned,
+      wantMessageSigned,
+    });
+
+    return spInstance;
+  }
+
+  private async getIdpInstance(idpId: string) {
+    const idp = await this.idpModel.findOne({
+      idpId,
+    });
+
+    if (!idp) {
+      throw new HttpException('Idp not found', HttpStatus.NOT_FOUND);
+    }
+
+    const singleSignOnService = [
+      {
+        Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+        Location: `${this.serverUrl}/idp/login/${idpId}`,
+      },
+      {
+        Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+        Location: `${this.serverUrl}/idp/login/${idpId}`,
+      },
+    ];
+
+    const singleLogoutService = [
+      {
+        Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+        Location: `${this.serverUrl}/idp/logout/${idpId}`,
+      },
+      {
+        Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+        Location: `${this.serverUrl}/idp/logout/${idpId}`,
+      },
+    ];
+
+    return samlify.IdentityProvider({
+      entityID: idp.entityID,
+      wantAuthnRequestsSigned: idp.wantAuthnRequestsSigned,
+      signingCert: idp.signingCert,
+      encryptCert: idp.encryptCert,
+      privateKey: idp.privateKey,
+      encPrivateKey: idp.encPrivateKey,
+      singleLogoutService,
+      singleSignOnService,
+      isAssertionEncrypted: idp.isAssertionEncrypted,
+      messageSigningOrder: idp.messageSigningOrder,
+      loginResponseTemplate: loginResponseTemplate({
+        attributes: idp.attributes,
+      }),
+      nameIDFormat: [idp.nameIdFormat || NameIDFormatEnum.unspecified],
+    });
+  }
+
   async createIdp(createIdpDto: CreateIdpDto) {
     try {
       const idpId = createIdpDto.idpId || GenerateId('idp', 17);
@@ -239,11 +312,9 @@ export class IdpService {
           ]);
           console.log(`constructed idp and sp metadata`);
           // Initialize SP and IdP
-          const sp = samlify.ServiceProvider({
-            metadata: spMetaData,
-          });
-          const idpMetaData = await this.getMetaData(idpId);
-          const idp = this.getIdpInstance(idpMetaData, idpData);
+          const sp = await this.spInstance(issuer, idpData);
+
+          const idp = await this.getIdpInstance(idpId);
 
           console.log(`fetched sp and idp metadata`);
 
@@ -266,6 +337,7 @@ export class IdpService {
               userSession.session.requestId,
               userSession,
             ),
+
             idpData.messageSigningOrder ===
               MessageSigningOrderEnum.ENCRYPT_THEN_SIGN,
             relayState || idpData.defaultRelayState,
@@ -303,16 +375,19 @@ export class IdpService {
 
       const idpData = await this.getIdp(idpId);
       const idpMetadata = await this.getMetaData(idpId);
-      const idp = this.getIdpInstance(idpMetadata, idpData);
+      const idp = await this.getIdpInstance(idpId);
 
       const spMetadata =
         await this.serviceProviderService.getSpMetadataByEntityId(
           issuer,
           idpId,
         );
-      const sp = samlify.ServiceProvider({
-        metadata: spMetadata,
-      });
+      const sp = await this.spInstance(issuer, idpData);
+
+      console.debug(
+        'sp wants assertion signed: ',
+        sp.entityMeta.isWantAssertionsSigned(),
+      );
 
       const { extract } = await idp.parseLoginRequest(sp, binding, req);
 
@@ -356,19 +431,6 @@ export class IdpService {
         error.status || HttpStatus.BAD_GATEWAY,
       );
     }
-  }
-
-  private getIdpInstance(metadata: any, idp: Idp) {
-    return samlify.IdentityProvider({
-      messageSigningOrder: idp.messageSigningOrder,
-      isAssertionEncrypted: idp.isAssertionEncrypted,
-      metadata,
-      privateKey: idp.privateKey,
-      encPrivateKey: idp.encPrivateKey,
-      loginResponseTemplate: loginResponseTemplate({
-        attributes: idp.attributes,
-      }),
-    });
   }
 
   async createSession(req: any, res: any) {
@@ -418,11 +480,14 @@ export class IdpService {
       ]);
 
       // Initialize SP and IdP
-      const sp = samlify.ServiceProvider({
-        metadata: spMetaData,
-      });
+      const sp = await this.spInstance(issuer, idpData);
       const idpMetaData = await this.getMetaData(idpId);
-      const idp = this.getIdpInstance(idpMetaData, idpData);
+      const idp = await this.getIdpInstance(idpId);
+
+      console.debug(
+        'after login : sp wants assertion signed: ',
+        sp.entityMeta.isWantAssertionsSigned(),
+      );
 
       // Create user login response for SP
       const info = { extract: { request: { id: requestId } } };
@@ -440,6 +505,7 @@ export class IdpService {
           requestId,
           savedSession,
         ),
+
         idpData.messageSigningOrder ===
           MessageSigningOrderEnum.ENCRYPT_THEN_SIGN,
         relayState || idpData.defaultRelayState,
@@ -498,12 +564,7 @@ export class IdpService {
 
       const idpData = await this.getIdp(idpId);
       const idpMetadata = await this.getMetaData(idpId);
-      const idp = samlify.IdentityProvider({
-        metadata: idpMetadata,
-        privateKey: idpData.privateKey,
-        encPrivateKey: idpData.encPrivateKey,
-        messageSigningOrder: idpData.messageSigningOrder,
-      });
+      const idp = await this.getIdpInstance(idpId);
 
       const spmetadata =
         await this.serviceProviderService.getSpMetadataByEntityId(
@@ -511,9 +572,7 @@ export class IdpService {
           idpId,
         );
 
-      const sp = samlify.ServiceProvider({
-        metadata: spmetadata,
-      });
+      const sp = await this.spInstance(issuer, idpData);
 
       const { extract } = await idp.parseLogoutRequest(sp, binding, req);
 
