@@ -514,6 +514,8 @@ export class IdpService {
     try {
       let SAMLRequest: string, decodedString: string, relayState: string;
 
+      this.logger.log('Processing Logout Request for binindg : ' + binding);
+
       if (binding === 'post') {
         SAMLRequest = req.body.SAMLRequest;
         decodedString = Buffer.from(SAMLRequest, 'base64').toString('ascii');
@@ -526,6 +528,7 @@ export class IdpService {
           decodeURIComponent(SAMLRequest),
         );
       }
+      console.log({ decodedString });
 
       const { issuer } = samlify.Extractor.extract(decodedString, [
         {
@@ -588,7 +591,7 @@ export class IdpService {
   }
   async logoutRedirect(req: any, res: any, idpId: string) {
     this.logger.log('Received Logout Redirect');
-    req.octetString = this.buildOctetStringFromQuery(req.query);
+    // req.octetString = this.buildOctetStringFromQuery(req.query);
     return this.logoutPost(req, res, 'redirect', idpId);
   }
 
