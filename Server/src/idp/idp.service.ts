@@ -93,11 +93,11 @@ export class IdpService {
     const singleLogoutService = [
       {
         Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
-        Location: `${this.serverUrl}/idp/logout/${idpId}`,
+        Location: idp.sloUrl || `${this.serverUrl}/idp/logout/${idpId}`,
       },
       {
         Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-        Location: `${this.serverUrl}/idp/logout/${idpId}`,
+        Location: idp.sloUrl || `${this.serverUrl}/idp/logout/${idpId}`,
       },
     ];
 
@@ -247,11 +247,11 @@ export class IdpService {
       const singleLogoutService = [
         {
           Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
-          Location: `${this.serverUrl}/idp/logout/${idpId}`,
+          Location: idp.sloUrl || `${this.serverUrl}/idp/logout/${idpId}`,
         },
         {
           Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-          Location: `${this.serverUrl}/idp/logout/${idpId}`,
+          Location: idp.sloUrl || `${this.serverUrl}/idp/logout/${idpId}`,
         },
       ];
       const IdpInstance = samlify.IdentityProvider({
@@ -517,6 +517,7 @@ export class IdpService {
       if (binding === 'post') {
         SAMLRequest = req.body.SAMLRequest;
         decodedString = Buffer.from(SAMLRequest, 'base64').toString('ascii');
+
         relayState = req.body.RelayState;
       } else {
         SAMLRequest = req.query.SAMLRequest;
@@ -560,7 +561,7 @@ export class IdpService {
       const result = idp.createLogoutResponse(
         sp,
         { extract: { request: { id: extract.request.id } } },
-        binding,
+        'post',
         relayState,
       );
 
@@ -582,6 +583,7 @@ export class IdpService {
     }
   }
   async logoutRedirect(req: any, res: any, idpId: string) {
+    this.logger.log('Received Logout Redirect');
     req.octetString = this.buildOctetStringFromQuery(req.query);
     return this.logoutPost(req, res, 'redirect', idpId);
   }
