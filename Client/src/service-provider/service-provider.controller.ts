@@ -19,7 +19,7 @@ export class ServiceProviderController {
 
   @Get('logout')
   async spInitiatedLogout(@Res() res: any, @Req() req: any) {
-    await this.serviceProviderService.spInitiatedLogout(req, res);
+    await this.serviceProviderService.spInitiatedLogoutRedirect(req, res);
   }
 
   @Post('logout')

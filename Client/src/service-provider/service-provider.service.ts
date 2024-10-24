@@ -128,6 +128,23 @@ export class ServiceProviderService {
     }
   }
 
+  async spInitiatedLogoutRedirect(req: any, res: any) {
+    try {
+      const result = this.sp.createLogoutRequest(this.idp, 'redirect', {
+        logoutNameID: 'nitesh@mollatech.com',
+      });
+
+      const { context } = result;
+
+      return res.redirect(context);
+    } catch (err) {
+      this.logger.error(
+        'Error in creating logout redirect request: ' + err.message,
+      );
+      throw new HttpException(err.message, err.status || 500);
+    }
+  }
+
   async acs(req: any, res: any) {
     this.logger.log('ACS request received');
     try {

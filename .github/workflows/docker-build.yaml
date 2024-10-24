@@ -26,4 +26,5 @@ jobs:
         with:
           context: ./Server
           push: true
-          tags: beyondfuture/single-sign-on-saml:v1,beyondfuture/single-sign-on-saml:latest,
+          tags: beyondfuture/single-sign-on-saml:v1,beyondfuture/single-sign-on-saml:latest,beyondfuture/single-sign-on-saml:orange-v1,
+# beyondfuture/single-sign-on-saml:orange-v1
