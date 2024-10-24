@@ -558,12 +558,16 @@ export class IdpService {
 
       const { extract } = await idp.parseLogoutRequest(sp, binding, req);
 
+      this.logger.log('Creating Logout Response');
+
       const result = idp.createLogoutResponse(
         sp,
         { extract: { request: { id: extract.request.id } } },
         'post',
         relayState,
       );
+
+      this.logger.log('Logout Response created, redirecting to SP');
 
       const sessionCookie = req.cookies?.sessionIndex;
 
@@ -575,7 +579,7 @@ export class IdpService {
 
       return res.render('sp-post', result);
     } catch (error) {
-      this.logger.error(error.message);
+      console.log(error);
       throw new HttpException(
         error.message,
         error.status || HttpStatus.BAD_GATEWAY,
